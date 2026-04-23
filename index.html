@@ -1,86 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gill Transport Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50">
-    <div id="root"></div>
+import React, { useState, useEffect } from 'react';
 
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+const DriverAttendance = () => {
+  const [time, setTime] = useState(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }));
 
-    <script type="text/babel">
-      const { useState, useEffect } = React;
+  // Live Clock for UI
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-      function App() {
-        const [drivers, setDrivers] = useState(() => {
-          const saved = localStorage.getItem('gillTransportData');
-          return saved ? JSON.parse(saved) : [{ id: 1, name: 'Gurneet', phone: '9876543210', status: 'Out' }];
-        });
-        const [showModal, setShowModal] = useState(false);
-        const [editData, setEditData] = useState(null);
-        const [activeMenu, setActiveMenu] = useState(null);
+  return (
+    <div className="min-h-screen bg-gray-50 p-6 font-sans">
+      <header className="flex justify-between items-center mb-10">
+        <h1 className="text-2xl font-bold text-blue-900">Transport Portal</h1>
+        <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg">
+          {time} IST
+        </div>
+      </header>
 
-        // Daily Reset Logic
-        useEffect(() => {
-          const lastReset = localStorage.getItem('lastResetDate');
-          const today = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-          if (lastReset !== today) {
-            setDrivers(prev => prev.map(d => ({ ...d, status: 'Out' })));
-            localStorage.setItem('lastResetDate', today);
-          }
-        }, []);
-
-        const saveDrivers = (newDrivers) => {
-          setDrivers(newDrivers);
-          localStorage.setItem('gillTransportData', JSON.stringify(newDrivers));
-        };
-
-        const updateStatus = (id, status) => saveDrivers(drivers.map(d => d.id === id ? {...d, status} : d));
-
-        return (
-          <div className="min-h-screen p-6 max-w-4xl mx-auto">
-            <header className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold text-blue-900">Gill Transport</h1>
-              <button onClick={() => setShowModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">+ Add Driver</button>
-            </header>
-
-            <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-              {drivers.map((driver) => (
-                <div key={driver.id} className="p-6 border-b flex justify-between items-center relative hover:bg-gray-50">
-                  <div className="flex items-center gap-4">
-                    <a href={`tel:${driver.phone}`} className="text-blue-500 text-2xl">📞</a>
-                    <div>
-                      <div className="font-bold text-lg">{driver.name}</div>
-                      <div className="text-sm text-gray-400">{driver.status}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <button onClick={() => updateStatus(driver.id, 'In')} className="bg-green-100 text-green-700 px-4 py-1 rounded-lg font-bold">Check In</button>
-                    <button onClick={() => updateStatus(driver.id, 'Out')} className="bg-red-100 text-red-700 px-4 py-1 rounded-lg font-bold">Check Out</button>
-                    
-                    {/* Menu Trigger */}
-                    <button onClick={() => setActiveMenu(activeMenu === driver.id ? null : driver.id)} className="text-2xl">⋮</button>
-                    
-                    {activeMenu === driver.id && (
-                      <div className="absolute right-6 top-16 bg-white border shadow-lg rounded-xl z-10 w-32">
-                        <button onClick={() => {setEditData(driver); setShowModal(true); setActiveMenu(null)}} className="block w-full text-left px-4 py-2 hover:bg-gray-100">Edit</button>
-                        <button onClick={() => {saveDrivers(drivers.filter(d => d.id !== driver.id)); setActiveMenu(null)}} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Delete</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+      {/* Driver List */}
+      <div className="grid gap-4">
+        {['Driver A', 'Driver B', 'Driver C'].map((driver) => (
+          <div key={driver} className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center transition hover:shadow-md">
+            <span className="font-semibold text-lg">{driver}</span>
+            <div className="space-x-3">
+              <button className="bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600">Check In</button>
+              <button className="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600">Check Out</button>
             </div>
           </div>
-        );
-      }
-      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
-</body>
-</html>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default DriverAttendance;

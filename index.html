@@ -1,81 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gill Transport Attendance</title>
+    <title>Gill Transport Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-50">
+</head>
+<body class="bg-gray-50">
     <div id="root"></div>
+
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
-      const { useState, useEffect } = React;
+      const { useState } = React;
 
       function App() {
-        const [time, setTime] = useState(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }));
         const [drivers, setDrivers] = useState([
-          { id: 1, name: 'Driver A', status: 'Out' },
-          { id: 2, name: 'Driver B', status: 'Out' },
-          { id: 3, name: 'Driver C', status: 'Out' }
+          { id: 1, name: 'Driver A', phone: '9876543210', status: 'Out' }
         ]);
+        const [showModal, setShowModal] = useState(false);
+        const [editData, setEditData] = useState(null);
 
-        useEffect(() => {
-          const timer = setInterval(() => {
-            setTime(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }));
-          }, 1000);
-          return () => clearInterval(timer);
-        }, []);
+        const addOrEditDriver = (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const name = formData.get('name');
+          const phone = formData.get('phone');
 
-        const toggleStatus = (id, newStatus) => {
-          setDrivers(drivers.map(d => d.id === id ? { ...d, status: newStatus } : d));
+          if (editData) {
+            setDrivers(drivers.map(d => d.id === editData.id ? { ...d, name, phone } : d));
+          } else {
+            setDrivers([...drivers, { id: Date.now(), name, phone, status: 'Out' }]);
+          }
+          setShowModal(false);
+          setEditData(null);
         };
 
+        const deleteDriver = (id) => setDrivers(drivers.filter(d => d.id !== id));
+
         return (
-          <div className="min-h-screen p-4 md:p-10 max-w-4xl mx-auto">
-            <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-              <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Gill Transport</h1>
-              <div className="bg-blue-600 text-white px-6 py-2 rounded-2xl shadow-lg font-mono text-xl">
-                {time} <span className="text-sm ml-1 opacity-80">IST</span>
-              </div>
+          <div className="min-h-screen p-6 max-w-4xl mx-auto">
+            <header className="flex justify-between items-center mb-8">
+              <h1 className="text-3xl font-bold text-blue-900">Gill Transport</h1>
+              <button onClick={() => setShowModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700">+ Add Driver</button>
             </header>
 
-            <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-              <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-                <h2 className="text-gray-500 font-semibold uppercase text-xs tracking-widest">Daily Attendance</h2>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {drivers.map((driver) => (
-                  <div key={driver.id} className="p-6 flex flex-col sm:flex-row justify-between items-center gap-4 transition hover:bg-blue-50/30">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full ${driver.status === 'In' ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                      <span className="font-bold text-xl text-gray-800">{driver.name}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => toggleStatus(driver.id, 'In')}
-                        className={`px-6 py-2 rounded-xl font-bold transition-all ${driver.status === 'In' ? 'bg-green-100 text-green-700' : 'bg-white border-2 border-green-500 text-green-600 hover:bg-green-50'}`}>
-                        Check In
-                      </button>
-                      <button 
-                        onClick={() => toggleStatus(driver.id, 'Out')}
-                        className={`px-6 py-2 rounded-xl font-bold transition-all ${driver.status === 'Out' ? 'bg-red-100 text-red-700' : 'bg-white border-2 border-red-500 text-red-600 hover:bg-red-50'}`}>
-                        Check Out
-                      </button>
-                    </div>
+            <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+              {drivers.map((driver) => (
+                <div key={driver.id} className="p-6 border-b flex justify-between items-center hover:bg-gray-50"
+                     onContextMenu={(e) => { e.preventDefault(); if(confirm(`Edit or Delete ${driver.name}?`)) { setEditData(driver); setShowModal(true); } }}>
+                  
+                  <div className="flex items-center gap-4">
+                    <a href={`tel:${driver.phone}`} className="text-blue-500 hover:text-blue-700">📞</a>
+                    <span className="font-bold text-lg">{driver.name}</span>
                   </div>
-                ))}
-              </div>
+                  
+                  <div className="flex gap-2">
+                    <button onClick={() => deleteDriver(driver.id)} className="text-red-500 text-sm underline">Delete</button>
+                  </div>
+                </div>
+              ))}
             </div>
+
+            {/* Modal */}
+            {showModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                <form onSubmit={addOrEditDriver} className="bg-white p-8 rounded-2xl w-full max-w-sm">
+                  <h2 className="text-xl font-bold mb-4">{editData ? 'Edit Driver' : 'New Driver'}</h2>
+                  <input name="name" defaultValue={editData?.name} placeholder="Name" className="w-full p-3 border rounded-xl mb-3" required />
+                  <input name="phone" defaultValue={editData?.phone} placeholder="Phone Number" className="w-full p-3 border rounded-xl mb-4" required />
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShowModal(false)} className="flex-1 p-3 bg-gray-200 rounded-xl">Cancel</button>
+                    <button type="submit" className="flex-1 p-3 bg-blue-600 text-white rounded-xl">Save</button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         );
       }
 
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(<App />);
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
-  </body>
+</body>
 </html>
